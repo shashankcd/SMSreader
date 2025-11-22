@@ -34,10 +34,14 @@ jobs:
       # Generate Gradle Wrapper dynamically
       - name: Generate Gradle Wrapper
         run: |
+          WRAP_VER=9.2.1
+          ZIP_NAME=gradle-${WRAP_VER}-bin.zip
+          URL=https://services.gradle.org/distributions/${ZIP_NAME}
           mkdir -p gradle/wrapper
-          curl -s https://services.gradle.org/distributions/gradle-9.2.1-bin.zip -o gradle-9.2.1-bin.zip
-          unzip -q gradle-9.2.1-bin.zip -d gradle/
-          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-9.2.1-bin.zip" > gradle/wrapper/gradle-wrapper.properties
+          curl -fSL "$URL" -o "$ZIP_NAME"
+          unzip -q "$ZIP_NAME" -d gradle/
+          echo "distributionUrl=https\://services.gradle.org/distributions/${ZIP_NAME}" \
+               > gradle/wrapper/gradle-wrapper.properties
           echo '#!/bin/sh' > gradlew
           echo 'java -jar gradle/wrapper/gradle-wrapper.jar "$@"' >> gradlew
           chmod +x gradlew
