@@ -1,4 +1,4 @@
-name: Android Build (No Android Studio)
+name: Android Build & Sign Release
 
 on:
   push:
@@ -22,15 +22,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # 3. Set up Android SDK + Emulator (prebuilt)
+      # 3. Set up Android SDK (command-line tools only)
       - name: Set up Android SDK
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: android-actions/setup-android@v2
         with:
           api-level: 34
-          build-tools: "34.0.0"
-          target: google_apis
+          ndk: 25.2.9519653
 
-      # 4. Install system Gradle (no wrapper needed)
+      # 4. Install system Gradle
       - name: Install Gradle
         run: sudo apt-get update && sudo apt-get install -y gradle
 
@@ -38,18 +37,32 @@ jobs:
       - name: Build Debug APK
         run: gradle assembleDebug --stacktrace
 
-      # 6. Build Release APK
-      - name: Build Release APK
-        run: gradle assembleRelease --stacktrace
+      # 6. Prepare Keystore for Signing
+      - name: Decode Keystore
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
 
-      # 7. Upload Debug APK
+      # 7. Build & Sign Release APK
+      - name: Build Release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          gradle assembleRelease \
+            -Pandroid.injected.signing.store.file=release.jks \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD \
+            --stacktrace
+
+      # 8. Upload Debug APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: SMS-TCP-App-Debug
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      # 8. Upload Release APK
+      # 9. Upload Release APK
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
