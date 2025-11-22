@@ -35,6 +35,10 @@ jobs:
       - name: Generate Gradle Wrapper
         run: |
           mkdir -p gradle/wrapper
-          curl -s https://services.gradle.org/distributions/gradle-8.3-bin.zip -o gradle-8.3-bin.zip
-          unzip -q gradle-8.3-bin.zip -d gradle/
-          echo "d
+          curl -s https://services.gradle.org/distributions/gradle-9.2.1-bin.zip -o gradle-9.2.1-bin.zip
+          unzip -q gradle-9.2.1-bin.zip -d gradle/
+          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-9.2.1-bin.zip" > gradle/wrapper/gradle-wrapper.properties
+          echo '#!/bin/sh' > gradlew
+          echo 'java -jar gradle/wrapper/gradle-wrapper.jar "$@"' >> gradlew
+          chmod +x gradlew
+
